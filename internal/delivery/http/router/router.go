@@ -9,5 +9,6 @@ import (
 func Register(app *fiber.App, auth *handler.AuthHandler) {
 	apiV1 := app.Group("/api/v1")
 	apiV1.Post("/sign-in", auth.SignIn)
+	apiV1.Post("/sign-in-guest", auth.SignInGuest)
 	apiV1.Post("/sign-up", auth.SignUp)
 }

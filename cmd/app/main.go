@@ -48,11 +48,13 @@ func main() {
 
 	// usecases
 	signinUC := usecase.NewSignInUseCase(cfg, accountRepo, userRepo, sessionRepo)
+	signinGuest := usecase.NewSignInGuestUseCase(cfg, sessionRepo)
 	signupUC := usecase.NewSignUpUsecase(database.Pool, accountRepo, userRepo)
 
 	// handlers
 	authHandler := handler.NewAuthHandler(
 		signinUC,
+		signinGuest,
 		signupUC,
 	)
 

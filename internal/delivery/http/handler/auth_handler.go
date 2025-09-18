@@ -13,12 +13,13 @@ import (
 )
 
 type AuthHandler struct {
-	signin usecase.SignInUseCase
-	signup usecase.SignUpUsecase
+	signin      usecase.SignInUseCase
+	signinGuest usecase.SignInGuestUseCase
+	signup      usecase.SignUpUsecase
 }
 
-func NewAuthHandler(signin usecase.SignInUseCase, signup usecase.SignUpUsecase) *AuthHandler {
-	return &AuthHandler{signin: signin, signup: signup}
+func NewAuthHandler(signin usecase.SignInUseCase, signinGuest usecase.SignInGuestUseCase, signup usecase.SignUpUsecase) *AuthHandler {
+	return &AuthHandler{signin: signin, signinGuest: signinGuest, signup: signup}
 }
 
 func (h *AuthHandler) SignIn(c *fiber.Ctx) error {
@@ -46,7 +47,7 @@ func (h *AuthHandler) SignIn(c *fiber.Ctx) error {
 		case errors.Is(err, usecase.ErrInvalidCreds):
 			return c.Status(http.StatusUnauthorized).JSON(dto.MessageResponse{Message: "Invalid email or password."})
 		default:
-			slog.Error("signin failed", slog.String("err", err.Error()))
+			slog.Error("sign-in failed", slog.String("err", err.Error()))
 			return c.Status(http.StatusInternalServerError).JSON(dto.MessageResponse{Message: "Internal Server Error"})
 		}
 	}
@@ -54,6 +55,30 @@ func (h *AuthHandler) SignIn(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"data":    out,
 		"message": "Sign-in successfull.",
+	})
+}
+
+func (h AuthHandler) SignInGuest(c *fiber.Ctx) error {
+	ua := string(c.Request().Header.UserAgent())
+
+	out, err := h.signinGuest.Execute(c.Context(), usecase.SignInGuestInput{
+		UserAgent: &ua,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, usecase.ErrGuestDisabled):
+			return c.Status(http.StatusForbidden).JSON(dto.MessageResponse{Message: "Guest sign-in is currently disabled. Please create an account."})
+		case errors.Is(err, usecase.ErrGuestLimited):
+			return c.Status(http.StatusTooManyRequests).JSON(dto.MessageResponse{Message: "Guest session limit reached. Please try again later."})
+		default:
+			slog.Error("sign-in-guest failed", slog.String("err", err.Error()))
+			return c.Status(http.StatusInternalServerError).JSON(dto.MessageResponse{Message: "Internal Server Error"})
+		}
+	}
+
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"data":    out,
+		"message": "Guest sign-in successful.",
 	})
 }
 
@@ -89,7 +114,7 @@ func (h *AuthHandler) SignUp(c *fiber.Ctx) error {
 		case errors.Is(err, repository.ErrAccountExists):
 			return c.Status(http.StatusConflict).JSON(dto.MessageResponse{Message: "Email already exists."})
 		default:
-			slog.Error("signup failed", slog.String("err", err.Error()))
+			slog.Error("sign-up failed", slog.String("err", err.Error()))
 			return c.Status(http.StatusInternalServerError).JSON(dto.MessageResponse{Message: "Internal Server Error"})
 		}
 	}

@@ -56,6 +56,10 @@ type Config struct {
 	RateLimitWindow    time.Duration
 	RateLimitKeyHeader string
 
+	// Auth
+	GuestEnabled       bool
+	GuestRatePerMinute int
+
 	JWTSecret     string        // minimal 32 chars
 	JWTAccessTTL  time.Duration // ex: 15m
 	JWTRefreshTTL time.Duration // ex: 720h (30d)
@@ -124,6 +128,10 @@ func Parse() *Config {
 		RateLimitMax:       atoiDef(getEnv("RATE_LIMIT_MAX", "120"), 120),
 		RateLimitWindow:    time.Duration(atoiDef(getEnv("RATE_LIMIT_WINDOW_SEC", "60"), 60)) * time.Second,
 		RateLimitKeyHeader: getEnv("RATE_LIMIT_KEY_HEADER", ""),
+
+		// ===== Auth =====
+		GuestEnabled:       getEnv("GUEST_ENABLED", "false") == "true",
+		GuestRatePerMinute: atoiDef(getEnv("GUEST_SIGNIN_RATE_PER_MIN", "10"), 10),
 
 		JWTSecret:     getEnv("JWT_SECRET", "dev-please-change-this-32chars-minimum"),
 		JWTAccessTTL:  time.Duration(atoiDef(getEnv("JWT_ACCESS_TTL_MIN", "15"), 15)) * time.Minute,

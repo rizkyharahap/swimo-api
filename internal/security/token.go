@@ -15,11 +15,12 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewAccessToken(secret string, accountID, sessionID string, ttl time.Duration) (token string, exp time.Time, err error) {
+func NewAccessToken(secret string, kind string, accountID, sessionID string, ttl time.Duration) (token string, exp time.Time, err error) {
 	now := time.Now()
 	exp = now.Add(ttl)
+
 	claims := Claims{
-		Kind:      "user",
+		Kind:      kind,
 		SessionID: sessionID,
 		Sub:       accountID,
 		RegisteredClaims: jwt.RegisteredClaims{

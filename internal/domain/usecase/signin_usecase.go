@@ -83,7 +83,7 @@ func (uc *signInUc) Execute(ctx context.Context, in SignInInput) (*SignInOutput,
 	}
 
 	// access token
-	access, exp, err := security.NewAccessToken(uc.cfg.JWTSecret, accID, sessID, uc.cfg.JWTAccessTTL)
+	access, exp, err := security.NewAccessToken(uc.cfg.JWTSecret, "user", accID, sessID, uc.cfg.JWTAccessTTL)
 	if err != nil {
 		return nil, err
 	}
