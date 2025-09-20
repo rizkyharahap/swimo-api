@@ -2,6 +2,7 @@ package server
 
 import (
 	"haphap/swimo-api/config"
+	"haphap/swimo-api/internal/middleware"
 	"haphap/swimo-api/pkg/response"
 	"log/slog"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/etag"
@@ -74,34 +76,14 @@ func NewServer(cfg *config.Config) *Server {
 		Level: compress.LevelDefault,
 	}))
 
+	// Cache with revalidation
+	app.Use(cache.New(cache.Config{
+		Expiration:   600 * time.Second, // Cache TTL set to 600 seconds (10 minutes)
+		CacheControl: true,              // Automatically sets Cache-Control header
+	}))
+
 	// Request logger (custom, using slog)
-	app.Use(func(c *fiber.Ctx) error {
-		start := time.Now()
-		err := c.Next()
-		lat := time.Since(start)
-
-		attrs := []any{
-			slog.String("rid", string(c.Response().Header.Peek("X-Request-ID"))),
-			slog.String("method", c.Method()),
-			slog.String("path", c.OriginalURL()),
-			slog.Int("status", c.Response().StatusCode()),
-			slog.Duration("latency", lat),
-			slog.Int("bytes_in", len(c.Request().Body())),
-			slog.Int("bytes_out", len(c.Response().Body())),
-		}
-
-		// Log level by status
-		status := c.Response().StatusCode()
-		switch {
-		case status >= 500:
-			slog.Error("http", attrs...)
-		case status >= 400:
-			slog.Warn("http", attrs...)
-		default:
-			slog.Info("http", attrs...)
-		}
-		return err
-	})
+	app.Use(middleware.LoggingMiddleware)
 
 	// Health & readiness
 	app.Get("/healthz", func(c *fiber.Ctx) error {
