@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"haphap/swimo-api/db"
+	"haphap/swimo-api/database"
 	"haphap/swimo-api/internal/config"
 	"haphap/swimo-api/internal/delivery/http/handler"
 	"haphap/swimo-api/internal/delivery/http/router"
@@ -24,32 +24,27 @@ func main() {
 	// config
 	cfg := config.Parse()
 
-	// db
+	// database
 	ctx := context.Background()
-	database, err := db.Connect(ctx, cfg.DatabaseURL,
-		db.WithMaxConns(cfg.DBMaxConns),
-		db.WithMinConns(cfg.DBMinConns),
-		db.WithMaxConnLifetime(cfg.DBMaxConnLifetime),
-		db.WithMaxConnIdleTime(cfg.DBMaxConnIdleTime),
-	)
+	db, err := database.Connect(ctx, cfg)
 	if err != nil {
-		slog.Error("db connect failed", slog.String("err", err.Error()))
+		slog.Error("database connect failed", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
-	defer database.Close()
+	defer db.Close()
 
 	// server
 	srv := config.NewServer(cfg)
 
 	// repositories
-	accountRepo := repository.NewAccountRepository(database.Pool)
-	userRepo := repository.NewUserRepository(database.Pool)
-	sessionRepo := repository.NewSessionRepository(database.Pool)
+	accountRepo := repository.NewAccountRepository(db.Pool)
+	userRepo := repository.NewUserRepository(db.Pool)
+	sessionRepo := repository.NewSessionRepository(db.Pool)
 
 	// usecases
 	signinUC := usecase.NewSignInUseCase(cfg, accountRepo, userRepo, sessionRepo)
 	signinGuest := usecase.NewSignInGuestUseCase(cfg, sessionRepo)
-	signupUC := usecase.NewSignUpUsecase(database.Pool, accountRepo, userRepo)
+	signupUC := usecase.NewSignUpUsecase(db.Pool, accountRepo, userRepo)
 
 	// handlers
 	authHandler := handler.NewAuthHandler(

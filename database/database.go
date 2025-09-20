@@ -1,7 +1,8 @@
-package db
+package database
 
 import (
 	"context"
+	"haphap/swimo-api/internal/config"
 	"log/slog"
 	"time"
 
@@ -12,31 +13,29 @@ type DB struct {
 	Pool *pgxpool.Pool
 }
 
-func Connect(ctx context.Context, dsn string, opts ...Option) (*DB, error) {
-	cfg, err := pgxpool.ParseConfig(dsn)
+func Connect(ctx context.Context, cfg *config.Config) (*DB, error) {
+	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
 	if err != nil {
 		slog.Error("db parse config failed", slog.String("err", err.Error()))
 		return nil, err
 	}
 
 	// defaults
-	cfg.MaxConns = 15
-	cfg.MinConns = 2
-	cfg.MaxConnLifetime = time.Hour
-	cfg.MaxConnIdleTime = 5 * time.Minute
+	poolConfig.MaxConns = cfg.DBMaxConns
+	poolConfig.MinConns = cfg.DBMinConns
+	poolConfig.MaxConnLifetime = cfg.DBMaxConnLifetime
+	poolConfig.MaxConnIdleTime = cfg.DBMaxConnIdleTime
 
-	for _, opt := range opts {
-		opt(cfg)
-	}
-
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		slog.Error("db pool create failed", slog.String("err", err.Error()))
 		return nil, err
 	}
 
-	_, cancel := context.WithTimeout(ctx, 2*time.Second)
+	pgCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
+
+	err = pool.Ping(pgCtx)
 	if err != nil {
 		slog.Error("db ping failed", slog.String("err", err.Error()))
 		pool.Close()

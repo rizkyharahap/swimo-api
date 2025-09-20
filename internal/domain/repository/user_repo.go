@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,7 +18,7 @@ type UserProfile struct {
 
 type UserRepository interface {
 	GetByAccountID(ctx context.Context, accountID string) (*UserProfile, error)
-	Create(ctx context.Context, q Querier, accountID, name string, weight, height *float64, age *int16) (string, error)
+	Create(ctx context.Context, tx pgx.Tx, accountID, name string, weight, height *float64, age *int16) (string, error)
 }
 
 type userRepo struct{ db *pgxpool.Pool }
@@ -43,13 +44,13 @@ func (r *userRepo) GetByAccountID(ctx context.Context, accountID string) (*UserP
 	return &userProfile, nil
 }
 
-func (r *userRepo) Create(ctx context.Context, q Querier, accountID, name string, weight, height *float64, age *int16) (string, error) {
+func (r *userRepo) Create(ctx context.Context, tx pgx.Tx, accountID, name string, weight, height *float64, age *int16) (string, error) {
 	const sql = `
 		INSERT INTO users (account_id, name, weight_kg, height_cm, age_years)
 		VALUES ($1,$2,$3,$4,$5)
 		RETURNING id`
 	var id string
-	if err := q.QueryRow(ctx, sql, accountID, name, weight, height, age).Scan(&id); err != nil {
+	if err := tx.QueryRow(ctx, sql, accountID, name, weight, height, age).Scan(&id); err != nil {
 		return "", err
 	}
 	return id, nil

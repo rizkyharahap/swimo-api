@@ -15,7 +15,7 @@ var (
 
 type AccountRepository interface {
 	GetByEmail(ctx context.Context, email string) (string, string, bool, error)
-	Create(ctx context.Context, q Querier, email, passwordHash string) (string, error) // returns account_id
+	Create(ctx context.Context, tx pgx.Tx, email, passwordHash string) (string, error) // returns account_id
 }
 
 type accountRepo struct{ db *pgxpool.Pool }
@@ -36,10 +36,10 @@ func (r *accountRepo) GetByEmail(ctx context.Context, email string) (string, str
 	return id, hash, locked, nil
 }
 
-func (r *accountRepo) Create(ctx context.Context, q Querier, email, passwordHash string) (string, error) {
+func (r *accountRepo) Create(ctx context.Context, tx pgx.Tx, email, passwordHash string) (string, error) {
 	const sql = `INSERT INTO accounts (email, password_hash) VALUES ($1, $2) RETURNING id`
 	var id string
-	err := q.QueryRow(ctx, sql, email, passwordHash).Scan(&id)
+	err := tx.QueryRow(ctx, sql, email, passwordHash).Scan(&id)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // unique_violation
