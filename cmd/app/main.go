@@ -10,10 +10,8 @@ import (
 
 	"haphap/swimo-api/config"
 	"haphap/swimo-api/database"
-	"haphap/swimo-api/internal/delivery/http/handler"
-	"haphap/swimo-api/internal/delivery/http/router"
-	"haphap/swimo-api/internal/domain/repository"
-	"haphap/swimo-api/internal/domain/usecase"
+	"haphap/swimo-api/internal/app/auth"
+	"haphap/swimo-api/internal/app/auth/delivery/http"
 	"haphap/swimo-api/internal/server"
 	"haphap/swimo-api/pkg/logging"
 )
@@ -39,24 +37,16 @@ func main() {
 	srv := server.NewServer(cfg)
 
 	// repositories
-	accountRepo := repository.NewAccountRepository(db.Pool)
-	userRepo := repository.NewUserRepository(db.Pool)
-	sessionRepo := repository.NewSessionRepository(db.Pool)
+	authRepo := auth.NewAuthRepository(db.Pool)
 
 	// usecases
-	signinUC := usecase.NewSignInUseCase(cfg, accountRepo, userRepo, sessionRepo)
-	signinGuest := usecase.NewSignInGuestUseCase(cfg, sessionRepo)
-	signupUC := usecase.NewSignUpUsecase(db.Pool, accountRepo, userRepo)
+	authUsecase := auth.NewAuthUseCase(cfg, db.Pool, authRepo)
 
 	// handlers
-	authHandler := handler.NewAuthHandler(
-		signinUC,
-		signinGuest,
-		signupUC,
-	)
+	authHandler := http.NewAuthHandler(authUsecase)
 
 	// routes
-	router.Register(srv.App, authHandler)
+	http.Register(srv.App, authHandler)
 
 	// run + graceful shutdown
 	errCh := make(chan error, 1)

@@ -2,6 +2,7 @@ package server
 
 import (
 	"haphap/swimo-api/config"
+	"haphap/swimo-api/pkg/response"
 	"log/slog"
 	"net"
 	"strconv"
@@ -40,8 +41,8 @@ func NewServer(cfg *config.Config) *Server {
 				slog.String("err", err.Error()),
 			)
 
-			return c.Status(code).JSON(fiber.Map{
-				"message": httpStatusMessage(code),
+			return c.Status(code).JSON(response.BaseResponse{
+				Message: httpStatusMessage(code),
 			})
 		},
 	})
@@ -55,7 +56,6 @@ func NewServer(cfg *config.Config) *Server {
 
 	// CORS
 	app.Use(cors.New(cors.Config{
-
 		AllowOrigins:     cfg.CORS.AllowOrigins,
 		AllowMethods:     cfg.CORS.AllowMethods,
 		AllowHeaders:     cfg.CORS.AllowHeaders,
@@ -105,10 +105,10 @@ func NewServer(cfg *config.Config) *Server {
 
 	// Health & readiness
 	app.Get("/healthz", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "ok"})
+		return c.JSON(response.BaseResponse{Message: "ok"})
 	})
 	app.Get("/readyz", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{"status": "ready"})
+		return c.JSON(response.BaseResponse{Message: "ready"})
 	})
 
 	return &Server{App: app}
