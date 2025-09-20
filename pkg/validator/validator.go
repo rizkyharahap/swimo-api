@@ -7,7 +7,7 @@ import (
 
 // ValidationError is a custom error type to hold multiple validation messages.
 type ValidationError struct {
-	Errors map[string]string `json:"errors"`
+	Errors map[string]string
 }
 
 func (e *ValidationError) Error() string {

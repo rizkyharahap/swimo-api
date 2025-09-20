@@ -34,19 +34,23 @@ type (
 )
 
 func (r *SignInRequest) Validate() *validator.ValidationError {
-	validationErrors := make(map[string]string)
+	errors := make(map[string]string)
 
 	sanitizedEmail := strings.TrimSpace(strings.ToLower(r.Email))
-	if !validator.EmailPattern.MatchString(sanitizedEmail) {
-		validationErrors["email"] = "email is not a valid format"
+	if sanitizedEmail == "" {
+		errors["email"] = "Email is required"
+	} else if !validator.EmailPattern.MatchString(sanitizedEmail) {
+		errors["email"] = "Email is not a valid format"
 	}
 
-	if len(r.Password) < 8 {
-		validationErrors["password"] = "password must be at least 8 characters"
+	if r.Password == "" {
+		errors["password"] = "Password is required"
+	} else if len(r.Password) < 8 {
+		errors["password"] = "Password must be at least 8 characters"
 	}
 
-	if len(validationErrors) > 0 {
-		return &validator.ValidationError{Errors: validationErrors}
+	if len(errors) > 0 {
+		return &validator.ValidationError{Errors: errors}
 	}
 
 	return nil

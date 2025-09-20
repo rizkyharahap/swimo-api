@@ -44,7 +44,7 @@ func NewServer(cfg *config.Config) *Server {
 				slog.String("err", err.Error()),
 			)
 
-			return c.Status(code).JSON(response.BaseResponse{
+			return c.Status(code).JSON(response.Base{
 				Message: httpStatusMessage(code),
 			})
 		},
@@ -65,7 +65,7 @@ func NewServer(cfg *config.Config) *Server {
 			return c.IP()
 		},
 		LimitReached: func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusTooManyRequests).JSON(response.BaseResponse{
+			return c.Status(fiber.StatusTooManyRequests).JSON(response.Base{
 				Message: "Too many requests, please try again later.",
 			})
 		},
@@ -102,10 +102,10 @@ func NewServer(cfg *config.Config) *Server {
 
 	// Health & readiness
 	app.Get("/healthz", func(c *fiber.Ctx) error {
-		return c.JSON(response.BaseResponse{Message: "ok"})
+		return c.JSON(response.Base{Message: "ok"})
 	})
 	app.Get("/readyz", func(c *fiber.Ctx) error {
-		return c.JSON(response.BaseResponse{Message: "ready"})
+		return c.JSON(response.Base{Message: "ready"})
 	})
 
 	return &Server{App: app}

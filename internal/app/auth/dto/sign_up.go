@@ -33,37 +33,42 @@ func (r *SignUpRequest) Validate() error {
 
 	sanitizedEmail := strings.TrimSpace(strings.ToLower(r.Email))
 	if !validator.EmailPattern.MatchString(sanitizedEmail) {
-		errors["email"] = "email is not a valid format"
+		errors["email"] = "Email is not a valid format"
 	}
 
-	if len(r.Password) < 8 {
-		errors["password"] = "password must be at least 8 characters"
+	if r.Password == "" {
+		errors["password"] = "Password is required"
+	} else if len(r.Password) < 8 {
+		errors["password"] = "Password must be at least 8 characters"
 	}
 
+	if r.ConfirmPassword == "" {
+		errors["confirmPassword"] = "Confirm password is required"
+	}
 	if r.Password != r.ConfirmPassword {
-		errors["confirmPassword"] = "passwords do not match"
+		errors["confirmPassword"] = "Confirm passwords do not match"
 	}
 
 	if strings.TrimSpace(r.Name) == "" {
-		errors["name"] = "name is required"
+		errors["name"] = "Name is required"
 	}
 
 	if r.Weight == nil {
-		errors["weight"] = "weight is required"
+		errors["weight"] = "Weight is required"
 	} else if *r.Weight < 0 {
-		errors["weight"] = "weight cannot be negative"
+		errors["weight"] = "Weight cannot be negative"
 	}
 
 	if r.Height == nil {
-		errors["height"] = "height is required"
+		errors["height"] = "Height is required"
 	} else if *r.Height < 0 {
-		errors["height"] = "height cannot be negative"
+		errors["height"] = "Height cannot be negative"
 	}
 
 	if r.Age == nil {
-		errors["age"] = "age is required"
+		errors["age"] = "Age is required"
 	} else if *r.Age < 0 {
-		errors["age"] = "age cannot be negative"
+		errors["age"] = "Age cannot be negative"
 	}
 
 	if len(errors) > 0 {
