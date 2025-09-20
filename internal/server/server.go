@@ -14,6 +14,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/etag"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
@@ -55,6 +56,20 @@ func NewServer(cfg *config.Config) *Server {
 	}))
 
 	app.Use(requestid.New())
+
+	// IP-based rate limiting
+	app.Use(limiter.New(limiter.Config{
+		Max:        20,
+		Expiration: 60 * time.Second,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(response.BaseResponse{
+				Message: "Too many requests, please try again later.",
+			})
+		},
+	}))
 
 	// CORS
 	app.Use(cors.New(cors.Config{
