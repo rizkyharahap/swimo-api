@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
-	"haphap/swimo-api/internal/config"
+	"haphap/swimo-api/config"
 	"haphap/swimo-api/internal/domain/repository"
 	"haphap/swimo-api/internal/security"
 	"strings"
@@ -74,8 +74,8 @@ func (uc *signInUc) Execute(ctx context.Context, in SignInInput) (*SignInOutput,
 	refreshHash := security.SHA256Hex(refresh)
 
 	now := time.Now()
-	expiresAt := now.Add(uc.cfg.JWTAccessTTL)
-	refreshExp := now.Add(uc.cfg.JWTRefreshTTL)
+	expiresAt := now.Add(uc.cfg.Auth.JWTAccessTTL)
+	refreshExp := now.Add(uc.cfg.Auth.JWTRefreshTTL)
 
 	sessID, err := uc.sessions.CreateUserSession(ctx, accID, &refreshHash, &expiresAt, &refreshExp, in.UserAgent)
 	if err != nil {
@@ -83,7 +83,7 @@ func (uc *signInUc) Execute(ctx context.Context, in SignInInput) (*SignInOutput,
 	}
 
 	// access token
-	access, exp, err := security.NewAccessToken(uc.cfg.JWTSecret, "user", accID, sessID, uc.cfg.JWTAccessTTL)
+	access, exp, err := security.NewAccessToken(uc.cfg.Auth.JWTSecret, "user", accID, sessID, uc.cfg.Auth.JWTAccessTTL)
 	if err != nil {
 		return nil, err
 	}

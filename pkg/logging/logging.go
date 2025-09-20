@@ -1,4 +1,4 @@
-package config
+package logging
 
 import (
 	"io"
@@ -11,7 +11,7 @@ import (
 // level: "debug" | "info" | "warn" | "error"
 // format: "json" | "text"
 // If filePath is empty, logs only to stderr.
-func InitLogging(appName, level, format, filepath string, addSource bool, extraAttrs ...slog.Attr) (*slog.Logger, func(), error) {
+func Init(appName, level, format, filepath string, addSource bool, extraAttrs ...slog.Attr) (*slog.Logger, func(), error) {
 	var lvl slog.Level
 
 	// Parse level

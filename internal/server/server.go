@@ -1,6 +1,7 @@
-package config
+package server
 
 import (
+	"haphap/swimo-api/config"
 	"log/slog"
 	"net"
 	"strconv"
@@ -18,13 +19,13 @@ type Server struct {
 	App *fiber.App
 }
 
-func NewServer(cfg *Config) *Server {
+func NewServer(cfg *config.Config) *Server {
 	app := fiber.New(fiber.Config{
-		Prefork:       cfg.HTTPPrefork,
-		ReadTimeout:   cfg.HTTPReadTimeout,
-		WriteTimeout:  cfg.HTTPWriteTimeout,
-		IdleTimeout:   cfg.HTTPIdleTimeout,
-		BodyLimit:     cfg.HTTPBodyLimitBytes,
+		Prefork:       cfg.HTTP.Prefork,
+		ReadTimeout:   cfg.HTTP.ReadTimeout,
+		WriteTimeout:  cfg.HTTP.WriteTimeout,
+		IdleTimeout:   cfg.HTTP.IdleTimeout,
+		BodyLimit:     cfg.HTTP.BodyLimitBytes,
 		CaseSensitive: true,
 		StrictRouting: false,
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -55,16 +56,16 @@ func NewServer(cfg *Config) *Server {
 	// CORS
 	app.Use(cors.New(cors.Config{
 
-		AllowOrigins:     cfg.CORSAllowOrigins,
-		AllowMethods:     cfg.CORSAllowMethods,
-		AllowHeaders:     cfg.CORSAllowHeaders,
-		ExposeHeaders:    cfg.CORSExposeHeaders,
-		AllowCredentials: cfg.CORSCredentials,
+		AllowOrigins:     cfg.CORS.AllowOrigins,
+		AllowMethods:     cfg.CORS.AllowMethods,
+		AllowHeaders:     cfg.CORS.AllowHeaders,
+		ExposeHeaders:    cfg.CORS.ExposeHeaders,
+		AllowCredentials: cfg.CORS.Credentials,
 		MaxAge:           600, // seconds
 	}))
 
 	// ETag
-	if cfg.HTTPEnableETag {
+	if cfg.HTTP.EnableETag {
 		app.Use(etag.New())
 	}
 
@@ -113,8 +114,8 @@ func NewServer(cfg *Config) *Server {
 	return &Server{App: app}
 }
 
-func (s *Server) Listen(cfg *Config) error {
-	addr := net.JoinHostPort(cfg.HTTPHost, strconv.Itoa(cfg.HTTPPort))
+func (s *Server) Listen(cfg *config.Config) error {
+	addr := net.JoinHostPort(cfg.HTTP.Host, strconv.Itoa(cfg.HTTP.Port))
 	slog.Info("fiber listening", slog.String("addr", addr))
 	return s.App.Listen(addr)
 }

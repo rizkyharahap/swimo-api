@@ -8,17 +8,19 @@ import (
 	"syscall"
 	"time"
 
+	"haphap/swimo-api/config"
 	"haphap/swimo-api/database"
-	"haphap/swimo-api/internal/config"
 	"haphap/swimo-api/internal/delivery/http/handler"
 	"haphap/swimo-api/internal/delivery/http/router"
 	"haphap/swimo-api/internal/domain/repository"
 	"haphap/swimo-api/internal/domain/usecase"
+	"haphap/swimo-api/internal/server"
+	"haphap/swimo-api/pkg/logging"
 )
 
 func main() {
 	// init logger
-	_, cleanup, _ := config.InitLogging("swimo", getenv("LOG_LEVEL", "info"), getenv("LOG_FORMAT", "json"), getenv("LOG_FILE", ""), true)
+	_, cleanup, _ := logging.Init("swimo", getenv("LOG_LEVEL", "info"), getenv("LOG_FORMAT", "json"), getenv("LOG_FILE", ""), true)
 	defer cleanup()
 
 	// config
@@ -34,7 +36,7 @@ func main() {
 	defer db.Close()
 
 	// server
-	srv := config.NewServer(cfg)
+	srv := server.NewServer(cfg)
 
 	// repositories
 	accountRepo := repository.NewAccountRepository(db.Pool)

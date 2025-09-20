@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"haphap/swimo-api/internal/config"
+	"haphap/swimo-api/config"
 	"log/slog"
 	"time"
 
@@ -14,17 +14,17 @@ type DB struct {
 }
 
 func Connect(ctx context.Context, cfg *config.Config) (*DB, error) {
-	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+	poolConfig, err := pgxpool.ParseConfig(cfg.Database.URL)
 	if err != nil {
 		slog.Error("db parse config failed", slog.String("err", err.Error()))
 		return nil, err
 	}
 
 	// defaults
-	poolConfig.MaxConns = cfg.DBMaxConns
-	poolConfig.MinConns = cfg.DBMinConns
-	poolConfig.MaxConnLifetime = cfg.DBMaxConnLifetime
-	poolConfig.MaxConnIdleTime = cfg.DBMaxConnIdleTime
+	poolConfig.MaxConns = cfg.Database.MaxConns
+	poolConfig.MinConns = cfg.Database.MinConns
+	poolConfig.MaxConnLifetime = cfg.Database.MaxConnLifetime
+	poolConfig.MaxConnIdleTime = cfg.Database.MaxConnIdleTime
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
